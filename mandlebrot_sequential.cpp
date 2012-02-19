@@ -18,18 +18,18 @@ int cal_pixel(complex c);
 inline void setPixel(int x, int y, int color, png::image< png::index_pixel > *image);
 
 // Global constants
-int disp_height = 4000;
-int disp_width = 6000;
+int DISP_HEIGHT = 4000;
+int DISP_WIDTH = 6000;
 
-int real_max = 1;
-int real_min = -2;
-int imag_max = 1;
-int imag_min = -1;
+int REAL_MAX = 1;
+int REAL_MIN = -2;
+int IMAG_MAX = 1;
+int IMAG_MIN = -1;
 
 int main()
 {
   // Initialize png image and create palette
-  png::image< png::index_pixel > image(disp_width, disp_height);
+  png::image< png::index_pixel > image(DISP_WIDTH, DISP_HEIGHT);
   png::palette pal(256);
   for (size_t i = 0; i < pal.size(); ++i){
     pal[i] = png::color(i, i*2.2, i*4.4);
@@ -52,15 +52,15 @@ int main()
 
 void generateMandlebrotImage(png::image< png::index_pixel > *image)
 {
-  double scale_real = double(real_max - real_min) / disp_width;
-  double scale_imag = double(imag_max - imag_min) / disp_height;
+  double scale_real = double(REAL_MAX - REAL_MIN) / DISP_WIDTH;
+  double scale_imag = double(IMAG_MAX - IMAG_MIN) / DISP_HEIGHT;
 
-  for (int x = 0; x < disp_width; x++){
-    for (int y = 0; y < disp_height; y++){
+  for (int x = 0; x < DISP_WIDTH; x++){
+    for (int y = 0; y < DISP_HEIGHT; y++){
 
       complex c;
-      c.real = real_min + ((double) x * scale_real);
-      c.imag = imag_min + ((double) y * scale_imag);
+      c.real = REAL_MIN + ((double) x * scale_real);
+      c.imag = IMAG_MIN + ((double) y * scale_imag);
 
       int color = cal_pixel(c);
       setPixel(x, y, color, image);
