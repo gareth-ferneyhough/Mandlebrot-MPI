@@ -13,13 +13,13 @@ struct complex{
 };
 
 // Function prototypes
-void generateMandlebrotImage(png::image< png::rgb_pixel > *image);
+void generateMandlebrotImage(png::image< png::index_pixel > *image);
 int cal_pixel(complex c);
-inline void setPixel(int x, int y, int color, png::image< png::rgb_pixel > *image);
+inline void setPixel(int x, int y, int color, png::image< png::index_pixel > *image);
 
 // Global constants
-int disp_height = 400;
-int disp_width = 600;
+int disp_height = 4000;
+int disp_width = 6000;
 
 int real_max = 1;
 int real_min = -2;
@@ -28,7 +28,13 @@ int imag_min = -1;
 
 int main()
 {
-  png::image< png::rgb_pixel > image(disp_width, disp_height);
+  // Initialize png image and create palette
+  png::image< png::index_pixel > image(disp_width, disp_height);
+  png::palette pal(256);
+  for (size_t i = 0; i < pal.size(); ++i){
+    pal[i] = png::color(i, i*2.2, i*4.4);
+  }
+  image.set_palette(pal);
 
   // Start timer
   boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
@@ -44,7 +50,7 @@ int main()
   return 0;
 }
 
-void generateMandlebrotImage(png::image< png::rgb_pixel > *image)
+void generateMandlebrotImage(png::image< png::index_pixel > *image)
 {
   double scale_real = double(real_max - real_min) / disp_width;
   double scale_imag = double(imag_max - imag_min) / disp_height;
@@ -85,8 +91,8 @@ int cal_pixel(complex c)
   return count;
 }
 
-inline void setPixel(int x, int y, int color, png::image< png::rgb_pixel > *image)
+inline void setPixel(int x, int y, int color, png::image< png::index_pixel > *image)
 {
-  (*image)[y][x] = png::rgb_pixel(color, color, color);
+  (*image)[y][x] = png::index_pixel(color);
 }
 
