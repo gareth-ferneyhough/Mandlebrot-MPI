@@ -2,6 +2,7 @@
 
 #include <mpi/mpi.h>
 #include <iostream>
+#include <vector>
 #include <boost/chrono.hpp>
 #include <png++/png.hpp>
 
@@ -27,8 +28,8 @@ void runMasterProcess(int world_rank, int world_size);
 void runSlaveProcess(int world_rank, int world_size);
 
 // Global constants
-int IMAGE_HEIGHT = 4000;
-int IMAGE_WIDTH = 6000;
+int IMAGE_HEIGHT = 400;
+int IMAGE_WIDTH = 600;
 
 int REAL_MAX = 1;
 int REAL_MIN = -2;
@@ -97,29 +98,34 @@ void runSlaveProcess(int world_rank, int world_size)
            MPI_COMM_WORLD,
            &status);
 
-  complex c;
+  // Create structure for results.
+  // Should really create MPI_STRUCT but will just
+  // use array of doubles for now.
+  // Each pixel need three values: x, y, and color.
+
+  std::vector<double> results;
+
   for(int x = 0; x < IMAGE_WIDTH; ++x){
     for(int y = row_num; y < row_num + ROWS_PER_PROCESS; ++y){
-
+      complex c;
       c.real = REAL_MIN + ((double) x * scale_real);
       c.imag = IMAG_MIN + ((double) y * scale_imag);
       int color = cal_pixel(c);
 
-      // Create structure for results
-      double p[3];
-      p[0] = x;
-      p[1] = y;
-      p[2] = static_cast<double> (color);
-
-      // Send each pixel result to master
-      MPI_Send(&p,
-               3,
-               MPI_DOUBLE,
-               0,
-               0,
-               MPI_COMM_WORLD);
+      // Put in results array
+      results.push_back(x);
+      results.push_back(y);
+      results.push_back(static_cast<double> (color));
     }
   }
+
+  // Send results to master
+  MPI_Send(&(results[0]),
+           results.size(),
+           MPI_DOUBLE,
+           0,
+           0,
+           MPI_COMM_WORLD);
 }
 
 void generateMandlebrotImage(png::image< png::index_pixel > *image)
@@ -132,7 +138,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image)
 
   int slave_process_id = 1;
   for (int row = 0; row < IMAGE_HEIGHT; row += ROWS_PER_PROCESS){
- 
+
     // Send row numbers to slaves
     int return_val = MPI_Send(&row,
                               1,
@@ -145,26 +151,30 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image)
       int str_len;
       char* err_str;
       MPI_Error_string(return_val, err_str, &str_len);
-
       cerr << "Error sending to slaves: " << err_str << endl;
     }
 
     slave_process_id ++;
   }
 
-  // Revieve each pixel back
-  MPI_Status status;
-  double p[3];
+  // Revieve sub-area back from each process
+  int sub_area_size = ROWS_PER_PROCESS * IMAGE_WIDTH * 3; // 3 values for each pixel (x, y, color)
+  double *sub_area = new double[sub_area_size];
 
-  for (int i = 0; i < IMAGE_HEIGHT * IMAGE_WIDTH; ++i){
-    MPI_Recv(&p,
-             3,
+  for (int i = 0; i < IMAGE_HEIGHT / ROWS_PER_PROCESS ; ++i){
+    MPI_Status status;
+    MPI_Recv(sub_area,
+             sub_area_size,
              MPI_DOUBLE,
              MPI_ANY_SOURCE,
              0,
              MPI_COMM_WORLD,
              &status);
-    setPixel(p[0], p[1], static_cast<int>(p[2]), image);
+
+    // Set pixel values for sub-area
+    for (int j = 0; j < sub_area_size - 3; j+= 3){
+      setPixel(sub_area[j], sub_area[j + 1], static_cast<int>(sub_area[j + 2]), image);
+    }
   }
 }
 
