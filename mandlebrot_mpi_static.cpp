@@ -14,10 +14,10 @@ struct complex{
   double imag;
 };
 
-struct pixel{
-  complex coord;
-  int color;
-};
+// struct pixel{
+//   complex coord;
+//   int color;
+// };
 
 // Function prototypes
 void generateMandlebrotImage(png::image< png::index_pixel > *image);
@@ -27,8 +27,8 @@ void runMasterProcess(int world_rank, int world_size);
 void runSlaveProcess(int world_rank, int world_size);
 
 // Global constants
-int DISP_HEIGHT = 400;
-int DISP_WIDTH = 600;
+int IMAGE_HEIGHT = 4000;
+int IMAGE_WIDTH = 6000;
 
 int REAL_MAX = 1;
 int REAL_MIN = -2;
@@ -62,17 +62,17 @@ int main(int argc, char** argv)
 void runMasterProcess(int world_rank, int world_size)
 {
   // Initialize png image and create palette
-  png::image< png::index_pixel > image(DISP_WIDTH, DISP_HEIGHT);
+  png::image< png::index_pixel > image(IMAGE_WIDTH, IMAGE_HEIGHT);
   png::palette pal(256);
   for (size_t i = 0; i < pal.size(); ++i){
-    pal[i] = png::color(i, i*2.2, i*4.4);
+    pal[i] = png::color(i, i*2.2, i*4.4); // can change these values to create new palette
   }
   image.set_palette(pal);
 
   // Start timer
   boost::chrono::system_clock::time_point start = boost::chrono::system_clock::now();
 
-  generateMandlebrotImage(&image);
+  generateMandlebrotImage(&image); // Compute all the things!
 
   // End timer
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
@@ -83,8 +83,8 @@ void runMasterProcess(int world_rank, int world_size)
 
 void runSlaveProcess(int world_rank, int world_size)
 {
-  double scale_real = double(REAL_MAX - REAL_MIN) / DISP_WIDTH;
-  double scale_imag = double(IMAG_MAX - IMAG_MIN) / DISP_HEIGHT;
+  double scale_real = double(REAL_MAX - REAL_MIN) / IMAGE_WIDTH;
+  double scale_imag = double(IMAG_MAX - IMAG_MIN) / IMAGE_HEIGHT;
 
   // Recive row number
   MPI_Status status;
@@ -98,7 +98,7 @@ void runSlaveProcess(int world_rank, int world_size)
            &status);
 
   complex c;
-  for(int x = 0; x < DISP_WIDTH; ++x){
+  for(int x = 0; x < IMAGE_WIDTH; ++x){
     for(int y = row_num; y < row_num + ROWS_PER_PROCESS; ++y){
 
       c.real = REAL_MIN + ((double) x * scale_real);
@@ -125,15 +125,15 @@ void runSlaveProcess(int world_rank, int world_size)
 void generateMandlebrotImage(png::image< png::index_pixel > *image)
 {
   // Ensure rows are divisible by ROWS_PER_PROCESS
-  assert( DISP_HEIGHT % ROWS_PER_PROCESS == 0);
+  assert( IMAGE_HEIGHT % ROWS_PER_PROCESS == 0);
 
-  double scale_real = double(REAL_MAX - REAL_MIN) / DISP_WIDTH;
-  double scale_imag = double(IMAG_MAX - IMAG_MIN) / DISP_HEIGHT;
+  double scale_real = double(REAL_MAX - REAL_MIN) / IMAGE_WIDTH;
+  double scale_imag = double(IMAG_MAX - IMAG_MIN) / IMAGE_HEIGHT;
 
   int slave_process_id = 1;
-  for (int row = 0; row < DISP_HEIGHT; row += ROWS_PER_PROCESS){
-    // cout << "sending to: " << slave_process_id << endl;
-
+  for (int row = 0; row < IMAGE_HEIGHT; row += ROWS_PER_PROCESS){
+ 
+    // Send row numbers to slaves
     int return_val = MPI_Send(&row,
                               1,
                               MPI_INT,
@@ -156,7 +156,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image)
   MPI_Status status;
   double p[3];
 
-  for (int i = 0; i < DISP_HEIGHT * DISP_WIDTH; ++i){
+  for (int i = 0; i < IMAGE_HEIGHT * IMAGE_WIDTH; ++i){
     MPI_Recv(&p,
              3,
              MPI_DOUBLE,
@@ -179,6 +179,7 @@ int cal_pixel(complex c)
 
   double temp, lengthsq;
 
+  // See if pixel is in Mandlebrot set, and if so, compute its intensity
   do {
     temp = z.real * z.real - z.imag * z.imag + c.real;
     z.imag = 2 * z.real * z.imag + c.imag;
