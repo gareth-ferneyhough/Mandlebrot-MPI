@@ -15,11 +15,6 @@ struct complex{
   double imag;
 };
 
-// struct pixel{
-//   complex coord;
-//   int color;
-// };
-
 // Function prototypes
 void generateMandlebrotImage(png::image< png::index_pixel > *image);
 int cal_pixel(complex c);
@@ -28,8 +23,8 @@ void runMasterProcess(int world_rank, int world_size);
 void runSlaveProcess(int world_rank, int world_size);
 
 // Global constants
-int IMAGE_HEIGHT = 400;
-int IMAGE_WIDTH = 600;
+int IMAGE_HEIGHT = 800;
+int IMAGE_WIDTH = 1200;
 
 int REAL_MAX = 1;
 int REAL_MIN = -2;
