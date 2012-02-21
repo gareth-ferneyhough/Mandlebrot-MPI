@@ -102,7 +102,6 @@ void runSlaveProcess(int world_rank, int world_size)
     MPI_Status status;
     int row_num = -1;
 
-    cout << world_rank << " waiting to recieve " << endl;
     MPI_Recv(&row_num,
              1,
              MPI_INT,
@@ -110,8 +109,6 @@ void runSlaveProcess(int world_rank, int world_size)
              MPI_ANY_TAG,
              MPI_COMM_WORLD,
              &status);
-
-    cout << world_rank << " recieved " << row_num << endl;
 
     if (status.MPI_TAG == MANDLEBROT_FINISH_TAG)
       return;
@@ -160,7 +157,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
   int row_index = 0;
   int slave_process_id = 1;
   while (slave_process_id < world_size){
-    cout << "sending initial row " << row_index << " to " << slave_process_id << endl;
+
     int return_val = MPI_Send(&row_index,
                               1,
                               MPI_INT,
@@ -200,8 +197,6 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
              &status);
 
     rows_recieved += ROWS_PER_PROCESS; // This must be 1 currently.
-    cout << "from: " << status.MPI_SOURCE << " -> setting row " << sub_area[1] << endl;
-    cout << "sub-area size: " << sub_area_size << endl;
 
     // Set pixel values for sub-area
     for (int j = 0; j <= sub_area_size - 3; j+= 3){
@@ -210,7 +205,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
 
     // If there are rows remaining to process, send them
     if (row_index != IMAGE_HEIGHT){
-      cout << "sending row " << row_index << " to " << status.MPI_SOURCE << endl;
+
       MPI_Send(&row_index,
                1,
                MPI_INT,
@@ -231,7 +226,6 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
                MPI_COMM_WORLD);
     }
   } // done creating image.
-  cout << "recieved " << rows_recieved << " rows\n";
 }
 
 int cal_pixel(complex c)
@@ -260,6 +254,5 @@ int cal_pixel(complex c)
 
 inline void setPixel(int x, int y, int color, png::image< png::index_pixel > *image)
 {
-  //  cout << "setting pixel " << x << ", " << y << endl;
   (*image)[y][x] = png::index_pixel(color);
 }
