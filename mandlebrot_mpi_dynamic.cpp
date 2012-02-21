@@ -94,51 +94,57 @@ void runMasterProcess(int world_rank, int world_size)
 
 void runSlaveProcess(int world_rank, int world_size)
 {
-  double scale_real = double(REAL_MAX - REAL_MIN) / IMAGE_WIDTH;
-  double scale_imag = double(IMAG_MAX - IMAG_MIN) / IMAGE_HEIGHT;
+  while (1){
+    double scale_real = double(REAL_MAX - REAL_MIN) / IMAGE_WIDTH;
+    double scale_imag = double(IMAG_MAX - IMAG_MIN) / IMAGE_HEIGHT;
 
-  // Recive row number
-  MPI_Status status;
-  int row_num = -1;
-  MPI_Recv(&row_num,
-           1,
-           MPI_INT,
-           0,
-           MPI_ANY_TAG,
-           MPI_COMM_WORLD,
-           &status);
+    // Recive row number
+    MPI_Status status;
+    int row_num = -1;
 
-  if (status.MPI_TAG == MANDLEBROT_FINISH_TAG)
-    return;
+    cout << world_rank << " waiting to recieve " << endl;
+    MPI_Recv(&row_num,
+             1,
+             MPI_INT,
+             0,
+             MPI_ANY_TAG,
+             MPI_COMM_WORLD,
+             &status);
 
-  // Create structure for results.
-  // Should really create MPI_STRUCT but will just
-  // use array of doubles for now.
-  // Each pixel need three values: x, y, and color.
+    cout << world_rank << " recieved " << row_num << endl;
 
-  std::vector<int> results;
+    if (status.MPI_TAG == MANDLEBROT_FINISH_TAG)
+      return;
 
-  for(int x = 0; x < IMAGE_WIDTH; ++x){
-    for(int y = row_num; y < row_num + ROWS_PER_PROCESS; ++y){
-      complex c;
-      c.real = REAL_MIN + ((double) x * scale_real);
-      c.imag = IMAG_MIN + ((double) y * scale_imag);
-      int color = cal_pixel(c);
+    // Create structure for results.
+    // Should really create MPI_STRUCT but will just
+    // use array of doubles for now.
+    // Each pixel need three values: x, y, and color.
 
-      // Put in results array
-      results.push_back(x);
-      results.push_back(y);
-      results.push_back(color);
+    std::vector<int> results;
+
+    for(int x = 0; x < IMAGE_WIDTH; ++x){
+      for(int y = row_num; y < row_num + ROWS_PER_PROCESS; ++y){
+        complex c;
+        c.real = REAL_MIN + ((double) x * scale_real);
+        c.imag = IMAG_MIN + ((double) y * scale_imag);
+        int color = cal_pixel(c);
+
+        // Put in results array
+        results.push_back(x);
+        results.push_back(y);
+        results.push_back(color);
+      }
     }
-  }
 
-  // Send results to master
-  MPI_Send(&(results[0]),
-           results.size(),
-           MPI_INT,
-           0,
-           MANDLEBROT_NORMAL_TAG,
-           MPI_COMM_WORLD);
+    // Send results to master
+    MPI_Send(&(results[0]),
+             results.size(),
+             MPI_INT,
+             0,
+             MANDLEBROT_NORMAL_TAG,
+             MPI_COMM_WORLD);
+  }
 }
 
 void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_size)
@@ -152,7 +158,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
 
   // First, send initial row(s) to each slave.
   int row_index = 0;
-  int slave_process_id = 0;
+  int slave_process_id = 1;
   while (slave_process_id < world_size){
     cout << "sending initial row " << row_index << " to " << slave_process_id << endl;
     int return_val = MPI_Send(&row_index,
@@ -194,15 +200,17 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
              &status);
 
     rows_recieved += ROWS_PER_PROCESS; // This must be 1 currently.
-    cout << "setting row " << sub_area[1] << endl;
+    cout << "from: " << status.MPI_SOURCE << " -> setting row " << sub_area[1] << endl;
+    cout << "sub-area size: " << sub_area_size << endl;
 
     // Set pixel values for sub-area
-    for (int j = 0; j < sub_area_size - 3; j+= 3){
-      setPixel(sub_area[j], sub_area[j + 1], static_cast<int>(sub_area[j + 2]), image);
+    for (int j = 0; j <= sub_area_size - 3; j+= 3){
+      setPixel(sub_area[j], sub_area[j + 1], sub_area[j + 2], image);
     }
 
     // If there are rows remaining to process, send them
     if (row_index != IMAGE_HEIGHT){
+      cout << "sending row " << row_index << " to " << status.MPI_SOURCE << endl;
       MPI_Send(&row_index,
                1,
                MPI_INT,
@@ -252,6 +260,6 @@ int cal_pixel(complex c)
 
 inline void setPixel(int x, int y, int color, png::image< png::index_pixel > *image)
 {
-  cout << "setting pixel " << x << ", " << y << endl;
+  //  cout << "setting pixel " << x << ", " << y << endl;
   (*image)[y][x] = png::index_pixel(color);
 }
