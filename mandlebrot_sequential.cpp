@@ -26,8 +26,13 @@ int REAL_MIN = -2;
 int IMAG_MAX = 1;
 int IMAG_MIN = -1;
 
-int main()
+int main(int argc, char** argv)
 {
+  if (argc == 3){
+    DISP_WIDTH  = static_cast<int>(strtod(argv[1], NULL));
+    DISP_HEIGHT = static_cast<int>(strtod(argv[2], NULL));
+  }
+
   // Initialize png image and create palette
   png::image< png::index_pixel > image(DISP_WIDTH, DISP_HEIGHT);
   png::palette pal(256);
@@ -43,7 +48,7 @@ int main()
 
   // End timer
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
-  std::cout << "took " << sec.count() << " seconds\n";
+  std::cout << DISP_WIDTH << "x" << DISP_HEIGHT << " " << sec.count() << " seconds\n";
 
   image.write("mandlebrot.png");
 

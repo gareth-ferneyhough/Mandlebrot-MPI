@@ -1,0 +1,10 @@
+#!/bin/bash
+#$ -cwd
+#$ -q BrainLab.owner
+#$ -N sequential
+#$ -o seq.o
+#$ -e seq.e
+
+export LD_LIBRARY_PATH=/home/garethf/usr/lib:$LD_LIBRARY_PATH
+
+./sequential $1 $2

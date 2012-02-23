@@ -1,6 +1,6 @@
 #define BOOST_CHRONO_HEADER_ONLY
 
-#include <mpi/mpi.h>
+#include <mpi.h>
 #include <iostream>
 #include <vector>
 #include <boost/chrono.hpp>

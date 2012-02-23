@@ -1,7 +1,7 @@
 #define BOOST_CHRONO_HEADER_ONLY
 
 #include <stdlib.h>
-#include <mpi/mpi.h>
+#include <mpi.h>
 #include <iostream>
 #include <vector>
 #include <boost/chrono.hpp>
@@ -39,7 +39,7 @@ static const int REAL_MIN = -2;
 static const int IMAG_MAX = 1;
 static const int IMAG_MIN = -1;
 
-static const int ROWS_PER_PROCESS = 1;
+static const int ROWS_PER_PROCESS = 10;
 
 int main(int argc, char** argv)
 {
@@ -70,8 +70,6 @@ int main(int argc, char** argv)
 
 void runMasterProcess(int world_rank, int world_size)
 {
-  cout << "Generating image of size: " << IMAGE_WIDTH << ", " << IMAGE_HEIGHT << endl;
-
   // Initialize png image and create palette
   png::image< png::index_pixel > image(IMAGE_WIDTH, IMAGE_HEIGHT);
   png::palette pal(256);
@@ -87,9 +85,9 @@ void runMasterProcess(int world_rank, int world_size)
 
   // End timer
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
-  std::cout << "took " << sec.count() << " seconds\n";
+  std::cout << IMAGE_WIDTH << "x" <<IMAGE_HEIGHT << " " << sec.count() << " seconds\n";
 
-  image.write("mandlebrot.png");
+  image.write("mandlebrot_p.png");
 }
 
 void runSlaveProcess(int world_rank, int world_size)
@@ -148,7 +146,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
 {
   // Ensure rows are divisible by ROWS_PER_PROCESS
   assert( IMAGE_HEIGHT % ROWS_PER_PROCESS == 0);
-  assert( ROWS_PER_PROCESS == 1);
+  //assert( ROWS_PER_PROCESS == 1);
 
   double scale_real = double(REAL_MAX - REAL_MIN) / IMAGE_WIDTH;
   double scale_imag = double(IMAG_MAX - IMAG_MIN) / IMAGE_HEIGHT;
