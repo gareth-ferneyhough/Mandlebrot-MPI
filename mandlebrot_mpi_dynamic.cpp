@@ -39,7 +39,7 @@ static const int REAL_MIN = -2;
 static const int IMAG_MAX = 1;
 static const int IMAG_MIN = -1;
 
-static const int ROWS_PER_PROCESS = 10;
+static const int ROWS_PER_PROCESS = 1;
 
 int main(int argc, char** argv)
 {
@@ -85,7 +85,7 @@ void runMasterProcess(int world_rank, int world_size)
 
   // End timer
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
-  std::cout << IMAGE_WIDTH << "x" <<IMAGE_HEIGHT << " " << sec.count() << " seconds\n";
+  std::cout << world_size << " " << IMAGE_WIDTH << "x" <<IMAGE_HEIGHT << " " << sec.count() << " seconds\n";
 
   image.write("mandlebrot_p.png");
 }
@@ -224,6 +224,15 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
                MPI_COMM_WORLD);
     }
   } // done creating image.
+
+  for (int slave = 1; slave < world_size; slave++){
+      MPI_Send(&slave, // This is dummy data now; we are just telling slave to quit.
+               1,
+               MPI_INT,
+               slave,     // Send back to slave that we just recieved from and
+               MANDLEBROT_FINISH_TAG, // tell the slave to quit.
+               MPI_COMM_WORLD);
+  }
 }
 
 int cal_pixel(complex c)
