@@ -74,7 +74,7 @@ void runMasterProcess(int world_rank, int world_size)
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
   std::cout << "took " << sec.count() << " seconds\n";
 
-  image.write("mandlebrot.png");
+  //  image.write("mandlebrot.png");
 }
 
 void runSlaveProcess(int world_rank, int world_size)

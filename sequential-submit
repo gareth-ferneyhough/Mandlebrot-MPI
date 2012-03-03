@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 #$ -cwd
 #$ -q BrainLab.owner
 #$ -N sequential
@@ -7,4 +7,20 @@
 
 export LD_LIBRARY_PATH=/home/garethf/usr/lib:$LD_LIBRARY_PATH
 
-./sequential $1 $2
+i="500"
+while [ $i -le 10000 ]
+do
+
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+  ./sequential $i $i
+
+  i=$[$i+500]
+done

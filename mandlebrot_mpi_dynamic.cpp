@@ -39,7 +39,7 @@ static const int REAL_MIN = -2;
 static const int IMAG_MAX = 1;
 static const int IMAG_MIN = -1;
 
-static const int ROWS_PER_PROCESS = 1;
+static const int ROWS_PER_PROCESS = 50;
 
 int main(int argc, char** argv)
 {
@@ -87,7 +87,7 @@ void runMasterProcess(int world_rank, int world_size)
   boost::chrono::duration<double> sec = boost::chrono::system_clock::now() - start;
   std::cout << world_size << " " << IMAGE_WIDTH << "x" <<IMAGE_HEIGHT << " " << sec.count() << " seconds\n";
 
-  image.write("mandlebrot_p.png");
+  //  image.write("mandlebrot_p.png");
 }
 
 void runSlaveProcess(int world_rank, int world_size)
@@ -154,7 +154,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
   // First, send initial row(s) to each slave.
   int row_index = 0;
   int slave_process_id = 1;
-  while (slave_process_id < world_size){
+  while (slave_process_id < world_size && row_index < IMAGE_HEIGHT){
 
     int return_val = MPI_Send(&row_index,
                               1,
@@ -162,13 +162,6 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
                               slave_process_id,
                               MANDLEBROT_NORMAL_TAG,
                               MPI_COMM_WORLD);
-    // Check for send errors
-    if (return_val != MPI_SUCCESS){
-      int str_len;
-      char* err_str;
-      MPI_Error_string(return_val, err_str, &str_len);
-      cerr << "Error sending to slaves: " << err_str << endl;
-    }
 
     row_index += ROWS_PER_PROCESS;
     slave_process_id ++;
@@ -194,7 +187,7 @@ void generateMandlebrotImage(png::image< png::index_pixel > *image, int world_si
              MPI_COMM_WORLD,
              &status);
 
-    rows_recieved += ROWS_PER_PROCESS; // This must be 1 currently.
+    rows_recieved += ROWS_PER_PROCESS; // This must be 1 currently. :(...
 
     // Set pixel values for sub-area
     for (int j = 0; j <= sub_area_size - 3; j+= 3){

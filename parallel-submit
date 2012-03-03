@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -cwd
 #$ -q BrainLab.owner
-#$ -pe orte 42
+#$ -pe orte-rr 16
 #$ -N parallel
 #$ -o par.o
 #$ -e par.e
@@ -9,4 +9,20 @@
 export PATH=/usr/lib64/openmpi-1.5.3/bin/:$PATH
 export LD_LIBRARY_PATH=/home/garethf/usr/lib:$LD_LIBRARY_PATH
 
-/usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ./parallel-dynamic $1 $2
+i="500"
+while [ $i -le 10000 ]
+do
+
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+  /usr/lib64/openmpi-1.5.3/bin/mpirun -np $NSLOTS ../parallel-dynamic $i $i
+
+  i=$[$i+500]
+done
